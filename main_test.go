@@ -66,6 +66,7 @@ var cluster = &clusterScenario{
 }
 
 var RECluster = false
+var USE_CONTAINERIZED_REDIS = false
 
 func registerProcess(port string, p *redisProcess) {
 	if processes == nil {
@@ -82,8 +83,8 @@ var _ = BeforeSuite(func() {
 	}
 	var err error
 	RECluster, _ = strconv.ParseBool(os.Getenv("RE_CLUSTER"))
-
-	if !RECluster {
+	USE_CONTAINERIZED_REDIS, _ = strconv.ParseBool(os.Getenv("USE_CONTAINERIZED_REDIS"))
+	if !RECluster || !USE_CONTAINERIZED_REDIS {
 
 		redisMain, err = startRedis(redisPort)
 		Expect(err).NotTo(HaveOccurred())
@@ -117,7 +118,8 @@ var _ = BeforeSuite(func() {
 			sentinelSlave2Port, "--slaveof", "127.0.0.1", sentinelMasterPort)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(startCluster(ctx, cluster)).NotTo(HaveOccurred())
+		err = startCluster(ctx, cluster)
+		Expect(err).NotTo(HaveOccurred())
 	} else {
 		redisPort = rediStackPort
 		redisAddr = rediStackAddr
